@@ -11,33 +11,25 @@ function jwtSignUser (user) {
   }
 
 module.exports = {
-    register (req,res,next) {
-        User.findOne({email:req.body.email})
-            .then(user=>{
-                if(user){
-                    res.status(409);
-                    const error =new Error('This email account is already in use.');
-                    next(error);
-                }else{
-                    bcrypt.hash(req.body.password,10,(err,hash)=>{
-                        const newUser = {
-                            email:req.body.email,
-                            password:hash,
-                        };
-                        User.create(newUser).then((response)=>{
-                            res.json({
-                                _id:response._id,
-                                email:response.email,
-                                token: jwtSignUser(newUser)
-                            })
-                        })
-                    })
-                }
-            }).catch(err => {
-                res.status(422);
-                next(err)
+    register (req,res) {
+        bcrypt.hash(req.body.password,10,(err,hash)=>{
+            const newUser = {
+                email:req.body.email,
+                password:hash,
+            };
+            User.create(newUser).then(()=>{
+                res.json({
+                    user:newUser,
+                    token: jwtSignUser(newUser)
+                })
+            }).catch(error=>{
+                res.status(400).send({
+                    error: 'This email account is already in use.'
+                })
             })
-    },
+        })
+        } ,
+                        
 
     async login (req,res) {
         try {
